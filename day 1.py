@@ -273,6 +273,131 @@ print(test.find("World"))
 print(test.startswith("Hello"))
 print(test.endswith("World"))
 
+# my_list=[1,2,3,4,5,'hello',4,5,1,2,3]
+# print(my_list)
+# my_tuple=(1,2,3,4,5,'hello',4,5,1,2,3)
+# print(my_tuple)
+# my_set={1,2,3,4}
+# print(my_set)
+# my_dict={1,2,3,3,4}
+# print(my_dict)
+# my_dict={"name":"alice","age":25,"city":"new york"}
+# print(my_dict
+
+
+# name="Apple"
+# # a=name.count('P')
+# def count_vowels(text):
+#     vowels="aeiouAEIOU"
+#     return sum(1 for char in text if char in vowels)
+# print(count_vowels(name))
+
+
+# age=int(input("enter your age:"))
+# if age <=18:
+#     print("eligible")
+# if age>=18:
+#     print("not eligible")
+#
+#
+# country = input("Where do you live?")
+# if age >= 18:
+#     if country == "India":
+#         print("You are Resident")
+#     else:
+#         print("You are not Resident")
+
+
+# marks=int(input("enter the marks obtained"))
+# if marks == 80:
+#     print("grade A")
+# if marks == 75:
+#     print("grade B")
+# if marks == 65:
+#     print("grade C")
+# if marks == 55:
+#     print("grade D")
+# if marks == 45:
+#     print("grade E")
+# if marks == 35 :
+#     print("FAIL")
+
+#fist 100 unit :$10/unit
+#next 100 unit :$20/unit
+#above 200 unit:$25/unit
+
+# meter1=int(input("enter the number of unit used in meter 1:- "))
+#
+#
+# #creating condition
+# a=10
+# b=20
+# c=25
+# if meter1<100:
+#     d=(a*meter1)
+#     print("TOTAL AMOUNT",d)
+# if meter1>=100 and meter1<200:
+#     f=(b*meter1)
+#     print("TOTAL AMOUNT",f)
+# if meter1>=300:
+#      k=(c*meter1)
+#      print("TOTAL AMOUNT",k)
+
+#
+# side1 = float(input("Enter the length of the first side: "))
+# side2 = float(input("Enter the length of the second side: "))
+# side3 = float(input("Enter the length of the third side: "))
+# if side1 <= 0 or side2 <= 0 or side3 <= 0:
+#     print("Invalid input. Side lengths must be positive.")
+# else:
+#      if ((side1 +  side2 > side3) and
+#              (side1 + side3 > side2) and
+#              (side2+ side3 > side1)):
+#          print("The triangle is valid.")
+#      else:
+#        print("The triangle is not valid.")
+
+
+# a=int(input("Enter a coefficient: "))
+# b=int(input("Enter b coefficient: "))
+# c=int(input("Enter c coefficient: "))
+# d=b**2- 4*a*c
+# if d < 0:
+#   print("No solution")
+# else:
+#   root1 = (-b + math.sqrt(d)) / (2*a)
+#   root2 = (-b - math.sqrt(d)) / (2*a)
+#   print("root1 = ",root1)
+#   print("root2 = ",root2)
+
+
+# year = int(input("Enter a year: "))
+# if year % 4 == 0:
+#   if year % 100 == 0:
+#     if year % 400 == 0:
+#        print(f"{year} is a leap year.")
+#     else:
+#       print(f"{year} is not a leap year.")
+#   else:
+#    print(f"{year} is a leap year.")
+# else:
+#   print(f"{year} is not a leap year.")
+#
+#
+# # Input from user
+# char = input("Enter a single character: ").lower()
+# # Check if the input is a valid single alphabet
+# if len(char) == 1 and char.isalpha():
+#   if char in 'aeiou':
+#       # Check if the character is a vowel
+#       print(f'''{char}' is a vowel.'')
+#   else:
+#     print(f'''{char}' is a consonant.'')
+#   else:
+#     print("Invalid input. Please enter a single alphabet.")
+
+
+
 
 
 
