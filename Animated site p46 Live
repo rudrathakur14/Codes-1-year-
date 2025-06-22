@@ -1,0 +1,196 @@
+from flask import Flask, render_template_string, request, redirect, url_for, session
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
+import sqlite3, os
+
+# Setup
+app = Flask(__name__)
+app.secret_key = "super-secret"
+UPLOAD_FOLDER = "uploads"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# Admin email
+ADMIN_EMAIL = "anvehsingh0612@gmail.com"
+
+# Login manager
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"
+
+# User model
+class User(UserMixin):
+    def __init__(self, id, username, email, password_hash, registered_on=None):
+        self.id = id
+        self.username = username
+        self.email = email
+        self.password_hash = password_hash
+        self.registered_on = registered_on
+
+@login_manager.user_loader
+def load_user(user_id):
+    conn = sqlite3.connect("users.db")
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM users WHERE id=?", (user_id,))
+    row = cur.fetchone()
+    conn.close()
+    return User(*row) if row else None
+
+def get_user_by_email(email):
+    conn = sqlite3.connect("users.db")
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM users WHERE email=?", (email,))
+    row = cur.fetchone()
+    conn.close()
+    return User(*row) if row else None
+
+def init_db():
+    conn = sqlite3.connect("users.db")
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT,
+            email TEXT UNIQUE,
+            password_hash TEXT,
+            registered_on TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+# Templates
+STYLE = """
+<style>
+body { font-family: Arial; background: linear-gradient(#89f7fe, #66a6ff); text-align: center; padding: 40px; color: #333; }
+.box { background:#fff; padding:30px; border-radius:12px; max-width:400px; margin:auto; box-shadow:0 5px 20px rgba(0,0,0,0.2);}
+input, button { padding:10px; margin:8px; width:80%%; border-radius:6px; border:1px solid #ccc;}
+button { background:#00b894; color:white; border:none; cursor:pointer; }
+.footer { margin-top:40px; color:white; font-size:0.9em; }
+img { max-width:90%%; margin:10px auto; border-radius:10px; }
+a { color:#0984e3; text-decoration: none; }
+table { margin:auto; border-collapse:collapse; }
+td, th { padding:8px 12px; border:1px solid #ccc; }
+</style>
+"""
+
+HOME_HTML = STYLE + """
+<h1>📸 Pics Animation Cam</h1>
+{% if current_user.is_authenticated %}
+  <div class='box'>
+    <p>Welcome, <b>{{ current_user.username }}</b></p>
+    <form method="post" action="/upload" enctype="multipart/form-data">
+      <input type="file" name="photo" accept="image/*" required><br>
+      <button type="submit">Upload</button>
+    </form>
+    {% if uploaded %}
+      <p>Click below to animate your photo with free AI:</p>
+      <a href="https://pollo.ai/animate-a-picture" target="_blank">✨ Animate Now</a>
+    {% endif %}
+    <p><a href="/logout">Logout</a></p>
+    {% if current_user.email == admin %}
+      <p><a href="/admin">View All Users</a></p>
+    {% endif %}
+  </div>
+{% else %}
+  <div class='box'>
+    <p><a href='/login'>Login</a> or <a href='/register'>Register</a> to get started!</p>
+  </div>
+{% endif %}
+<div class="footer">
+  Contact: <a href="mailto:anvehsingh0612@gmail.com">anvehsingh0612@gmail.com</a> |
+  <a href="https://instagram.com/picsanimationcam" target="_blank">Instagram</a>
+</div>
+"""
+
+REGISTER_HTML = STYLE + """
+<h2>Create Account</h2>
+<div class='box'>
+  <form method="post">
+    <input name="username" placeholder="Username" required>
+    <input name="email" type="email" placeholder="Email" required>
+    <input name="password" type="password" placeholder="Password" required>
+    <button type="submit">Register</button>
+  </form>
+  <p>Have an account? <a href="/login">Login</a></p>
+</div>
+"""
+
+LOGIN_HTML = STYLE + """
+<h2>Login</h2>
+<div class='box'>
+  <form method="post">
+    <input name="email" type="email" placeholder="Email" required>
+    <input name="password" type="password" placeholder="Password" required>
+    <button type="submit">Login</button>
+  </form>
+  <p>No account? <a href="/register">Register</a></p>
+</div>
+"""
+
+@app.route('/')
+def home():
+    uploaded = session.pop('uploaded', False)
+    return render_template_string(HOME_HTML, uploaded=uploaded, admin=ADMIN_EMAIL)
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        name, email = request.form['username'], request.form['email']
+        pwd_hash = generate_password_hash(request.form['password'])
+        try:
+            conn = sqlite3.connect("users.db")
+            conn.execute("INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)", (name, email, pwd_hash))
+            conn.commit()
+            return redirect('/login')
+        except sqlite3.IntegrityError:
+            return "Email already registered."
+    return render_template_string(REGISTER_HTML)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        user = get_user_by_email(request.form['email'])
+        if user and check_password_hash(user.password_hash, request.form['password']):
+            login_user(user)
+            return redirect('/')
+        return "Invalid login."
+    return render_template_string(LOGIN_HTML)
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect('/')
+
+@app.route('/upload', methods=['POST'])
+@login_required
+def upload():
+    file = request.files['photo']
+    filename = secure_filename(file.filename)
+    path = os.path.join(UPLOAD_FOLDER, filename)
+    file.save(path)
+    session['uploaded'] = True
+    return redirect('/')
+
+@app.route('/admin')
+@login_required
+def admin():
+    if current_user.email != ADMIN_EMAIL:
+        return "Access denied."
+
+    conn = sqlite3.connect("users.db")
+    cur = conn.cursor()
+    cur.execute("SELECT id, username, email, registered_on FROM users ORDER BY id DESC")
+    users = cur.fetchall()
+    conn.close()
+
+    html = STYLE + "<h2>👥 Registered Users</h2><table><tr><th>ID</th><th>Username</th><th>Email</th><th>Registered</th></tr>"
+    for user in users:
+        html += f"<tr><td>{user[0]}</td><td>{user[1]}</td><td>{user[2]}</td><td>{user[3]}</td></tr>"
+    html += "</table><p><a href='/'>← Back to Home</a></p>"
+    return html
+
+if __name__ == '__main__':
+    init_db()
+    app.run(debug=True)
